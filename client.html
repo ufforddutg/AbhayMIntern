@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client with Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .field {
+            margin-bottom: 15px;
+        }
+        .field label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .field input, .field button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #receivedData {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Client with Firebase</h1>
+        
+        <div class="field">
+            <label for="wsUrl">WebSocket Server URL:</label>
+            <input type="text" id="wsUrl" value="ws://192.168.137.77:8080" />
+        </div>
+        
+        <div class="field">
+            <button onclick="initializeWebSocket()">Connect</button>
+        </div>
+        
+        <div class="field">
+            <label for="messageInput">Message to Send:</label>
+            <input type="text" id="messageInput" placeholder="Type your message here" />
+        </div>
+        
+        <div class="field">
+            <button onclick="sendMessage()">Send Message</button>
+        </div>
+        
+        <div id="receivedData">
+            <h2>Received Data:</h2>
+            <pre id="dataOutput">No data received yet.</pre>
+        </div>
+
+        <div id="status">
+            <span id="connectionStatus">Disconnected</span>
+        </div>
+    </div>
+    
+    <script>
+        let ws;
+
+        function initializeWebSocket() {
+            const wsUrl = document.getElementById('wsUrl').value;
+            if (!wsUrl) {
+                alert('Please enter WebSocket server URL.');
+                return;
+            }
+            if (ws) {
+                ws.close(); 
+            }
+            ws = new WebSocket(wsUrl);
+            ws.onopen = function() {
+                console.log("Connected to WebSocket server");
+                ws.send("Client");
+                document.getElementById('connectionStatus').textContent = "Connected";
+                document.getElementById('connectionStatus').style.color = "green";
+            };
+            ws.onmessage = function(event) {
+                console.log("Received message:", event.data);
+                document.getElementById('dataOutput').textContent = event.data;
+            };
+            ws.onclose = function() {
+                console.log("Disconnected from WebSocket server");
+                document.getElementById('connectionStatus').textContent = "Disconnected";
+                document.getElementById('connectionStatus').style.color = "red";
+            };
+            ws.onerror = function(error) {
+                console.error("WebSocket error:", error);
+                document.getElementById('connectionStatus').textContent = "Error";
+                document.getElementById('connectionStatus').style.color = "orange";
+            };
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (!message) {
+                alert('Please enter a message to send.');
+                return;
+            }
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('WebSocket connection is not open.');
+                return;
+            }
+            ws.send(message);
+            console.log("Sent message:", message);
+        }
+
+        window.onload = function() {
+            document.getElementById('wsUrl').value = "ws://192.168.137.77:8080";
+        };
+
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden && ws) {
+                ws.close();
+                console.log("WebSocket connection closed due to page visibility change");
+            }
+        });
+    </script>
+</body>
+</html>
